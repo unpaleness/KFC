@@ -1,0 +1,8 @@
+*.sln
+.vs/
+Binaries
+Build
+Content/Collections
+Content/Developers
+Intermediate
+Saved
