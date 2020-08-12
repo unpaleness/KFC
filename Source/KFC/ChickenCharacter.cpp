@@ -1,14 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "ChickenPawn.h"
+#include "ChickenCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
+DEFINE_LOG_CATEGORY(LogChickenCharacter)
+
 // Sets default values
-AChickenPawn::AChickenPawn() {
+AChickenCharacter::AChickenCharacter() {
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshCube(TEXT("SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
 
 	if (SkeletalMeshCube.Succeeded()) {
@@ -26,10 +28,11 @@ AChickenPawn::AChickenPawn() {
 	// Create a camera boom attached to the root (capsule)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true); // Rotation of the character should not affect rotation of boom
+	CameraBoom->SetUsingAbsoluteRotation(true);
+	CameraBoom->SetUsingAbsoluteLocation(true);
 	CameraBoom->bDoCollisionTest = false;
-	CameraBoom->TargetArmLength = 500.f;
-	CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
+	CameraBoom->TargetArmLength = 700.f;
+	CameraBoom->SocketOffset = FVector(0.f, 0.f, 0.f);
 	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
 	// Create a camera and attach to boom
@@ -49,16 +52,16 @@ AChickenPawn::AChickenPawn() {
 }
 
 // Called when the game starts or when spawned
-void AChickenPawn::BeginPlay() {
+void AChickenCharacter::BeginPlay() {
 	Super::BeginPlay();
 }
 
 // Called every frame
-void AChickenPawn::Tick(float DeltaTime) {
+void AChickenCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
-void AChickenPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
+void AChickenCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }

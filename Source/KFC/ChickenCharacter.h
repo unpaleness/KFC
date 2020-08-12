@@ -2,15 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "ChickenPawn.generated.h"
+#include "ChickenCharacter.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogChickenCharacter, Log, All)
 
 class UCharacterMovementComponent;
-
 class UCameraComponent;
 class USpringArmComponent;
 
 UCLASS()
-class AChickenPawn : public ACharacter {
+class AChickenCharacter : public ACharacter {
 	GENERATED_BODY()
 
 	/** Side view camera */
@@ -23,7 +24,7 @@ class AChickenPawn : public ACharacter {
 
 public:
 	// Sets default values for this pawn's properties
-	AChickenPawn();
+	AChickenCharacter();
 
 protected:
 	// Called when the game starts or when spawned

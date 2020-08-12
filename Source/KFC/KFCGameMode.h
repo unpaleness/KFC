@@ -3,17 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "KFCGameMode.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogKFCGameMode, Log, All)
+
 UCLASS(minimalapi)
-class AKFCGameMode : public AGameModeBase
+class AKFCGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
 public:
 	AKFCGameMode();
+
+	UFUNCTION()
+	void ProcessChickenKaputt();
+
+	UFUNCTION()
+	void ProcessStartGame();
+
+private:
+	virtual void StartPlay() override;
+	virtual void StartMatch() override;
+	virtual void EndMatch() override;
 };
-
-
-

@@ -2,17 +2,51 @@
 
 #include "KFCGameMode.h"
 #include "ChickenPlayerController.h"
-#include "ChickenPawn.h"
-//#include "UObject/ConstructorHelpers.h"
+#include "ChickenCharacter.h"
+
+DEFINE_LOG_CATEGORY(LogKFCGameMode)
 
 AKFCGameMode::AKFCGameMode()
 {
-	//// set default pawn class to our Blueprinted character
-	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/SideScrollerCPP/Blueprints/SideScrollerCharacter"));
-	//if (PlayerPawnBPClass.Class != NULL)
-	//{
-	//	DefaultPawnClass = PlayerPawnBPClass.Class;
-	//}
 	PlayerControllerClass = AChickenPlayerController::StaticClass();
-	DefaultPawnClass = AChickenPawn::StaticClass();
+	DefaultPawnClass = AChickenCharacter::StaticClass();
+}
+
+void AKFCGameMode::ProcessChickenKaputt() {
+	EndMatch();
+}
+
+void AKFCGameMode::ProcessStartGame() {
+	if (MatchState == MatchState::WaitingToStart) {
+		StartMatch();
+	}
+}
+
+void AKFCGameMode::StartPlay() {
+	if (MatchState == MatchState::EnteringMap) {
+		SetMatchState(MatchState::WaitingToStart);
+	}
+
+	UE_LOG(LogKFCGameMode, Log, TEXT("Game starts"));
+
+	auto PlayerController = Cast<AChickenPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (IsValid(PlayerController)) {
+		PlayerController->ChickenKaputtDelegate.AddDynamic(this, &AKFCGameMode::ProcessChickenKaputt);
+		PlayerController->StartGameDelegate.AddDynamic(this, &AKFCGameMode::ProcessStartGame);
+	}
+	else {
+		UE_LOG(LogKFCGameMode, Warning, TEXT("Player controller is invalid!"));
+	}
+}
+
+void AKFCGameMode::StartMatch() {
+	Super::StartMatch();
+
+	UE_LOG(LogKFCGameMode, Log, TEXT("Match begins"));
+}
+
+void AKFCGameMode::EndMatch() {
+	Super::EndMatch();
+
+	UE_LOG(LogKFCGameMode, Log, TEXT("Match ends"));
 }
