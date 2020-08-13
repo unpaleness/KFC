@@ -6,13 +6,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogChickenPlayerController, Log, All)
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FChickenKaputtDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStartGameDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPauseGameDelegate);
+class AKFCGameMode;
 
-/**
- *
- */
 UCLASS()
 class AChickenPlayerController : public APlayerController {
 	GENERATED_BODY()
@@ -22,25 +17,24 @@ public:
 	virtual void PlayerTick(float DeltaTime) override;
 
 	UFUNCTION()
-	void ProcessChickenHit(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit);
-
-	FChickenKaputtDelegate ChickenKaputtDelegate;
-	FStartGameDelegate StartGameDelegate;
-	FPauseGameDelegate PauseGameDelegate;
+	void ProcessChickenHit();
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 
 private:
-	void Jump();
-	void StopJumping();
-	void Start();
-	void Pause();
+	void JumpAction();
+	void StopJumpingAction();
+	void StartAction();
+	void ResetAction();
+	void PauseAction();
+
+	AKFCGameMode* GetGameMode() const;
 
 private:
-	bool bPressedJump{false};
-	bool bIsJumping{false};
+	bool bIsChickenJumping{false};
+	bool bIsChickenDead{ false };
 
 	UPROPERTY(EditAnywhere, Category = "Chicken")
 	float JumpAcceleration = 1000.f;

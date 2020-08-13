@@ -26,6 +26,9 @@ public:
 	// Sets default values for this pawn's properties
 	AChickenCharacter();
 
+	UFUNCTION()
+	void ProcessChickenHit(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

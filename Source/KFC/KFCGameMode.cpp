@@ -1,6 +1,5 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "KFCGameMode.h"
+
 #include "ChickenPlayerController.h"
 #include "ChickenCharacter.h"
 
@@ -8,19 +7,30 @@ DEFINE_LOG_CATEGORY(LogKFCGameMode)
 
 AKFCGameMode::AKFCGameMode()
 {
+	bDelayedStart = true;
 	PlayerControllerClass = AChickenPlayerController::StaticClass();
 	DefaultPawnClass = AChickenCharacter::StaticClass();
 }
 
-void AKFCGameMode::ProcessChickenKaputt() {
+void AKFCGameMode::ProcessDieChicken() {
 	EndMatch();
 }
 
-void AKFCGameMode::ProcessStartGame() {
+bool AKFCGameMode::ProcessStartGame() {
 	if (MatchState == MatchState::WaitingToStart) {
 		StartMatch();
+		return true;
 	}
+	return false;
 }
+bool AKFCGameMode::ProcessResetGame() {
+	if (MatchState == MatchState::WaitingPostMatch) {
+		StartPlay();
+		return true;
+	}
+	return false;
+}
+
 
 void AKFCGameMode::StartPlay() {
 	if (MatchState == MatchState::EnteringMap) {
@@ -28,15 +38,6 @@ void AKFCGameMode::StartPlay() {
 	}
 
 	UE_LOG(LogKFCGameMode, Log, TEXT("Game starts"));
-
-	auto PlayerController = Cast<AChickenPlayerController>(GetWorld()->GetFirstPlayerController());
-	if (IsValid(PlayerController)) {
-		PlayerController->ChickenKaputtDelegate.AddDynamic(this, &AKFCGameMode::ProcessChickenKaputt);
-		PlayerController->StartGameDelegate.AddDynamic(this, &AKFCGameMode::ProcessStartGame);
-	}
-	else {
-		UE_LOG(LogKFCGameMode, Warning, TEXT("Player controller is invalid!"));
-	}
 }
 
 void AKFCGameMode::StartMatch() {

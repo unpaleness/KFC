@@ -16,11 +16,9 @@ class AKFCGameMode : public AGameMode
 public:
 	AKFCGameMode();
 
-	UFUNCTION()
-	void ProcessChickenKaputt();
-
-	UFUNCTION()
-	void ProcessStartGame();
+	void ProcessDieChicken();
+	bool ProcessStartGame();
+	bool ProcessResetGame();
 
 private:
 	virtual void StartPlay() override;

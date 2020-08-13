@@ -1,11 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "ChickenCharacter.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UObject/ConstructorHelpers.h"
+
+#include "ChickenPlayerController.h"
 
 DEFINE_LOG_CATEGORY(LogChickenCharacter)
 
@@ -49,6 +50,17 @@ AChickenCharacter::AChickenCharacter() {
 	//GetCharacterMovement()->GroundFriction = 3.f;
 	//GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	//GetCharacterMovement()->MaxFlySpeed = 600.f;
+
+	OnActorHit.AddDynamic(this, &AChickenCharacter::ProcessChickenHit);
+}
+
+void AChickenCharacter::ProcessChickenHit(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit) {
+	UE_LOG(LogChickenPlayerController, Log, TEXT("Chicken hit"));
+
+	auto ChickenController = Cast<AChickenPlayerController>(GetController());
+	if (IsValid(ChickenController)) {
+		ChickenController->ProcessChickenHit();
+	}
 }
 
 // Called when the game starts or when spawned
