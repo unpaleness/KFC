@@ -3,6 +3,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 
+#include "ChickenCharacter.h"
 #include "KFCGameMode.h"
 
 DEFINE_LOG_CATEGORY(LogChickenPlayerController)
@@ -18,9 +19,9 @@ void AChickenPlayerController::PlayerTick(float DeltaTime) {
 void AChickenPlayerController::ProcessChickenHit() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Chicken hit"));
 
-	bIsChickenDead = true;
+	bIsChickenDead_ = true;
 
-	auto GameMode = GetGameMode();
+	auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
 	if (IsValid(GameMode)) {
 		GameMode->ProcessDieChicken();
 	}
@@ -32,7 +33,7 @@ void AChickenPlayerController::ProcessChickenHit() {
 void AChickenPlayerController::BeginPlay() {
 	Super::BeginPlay();
 
-	bIsChickenDead = false;
+	bIsChickenDead_ = false;
 }
 
 void AChickenPlayerController::SetupInputComponent() {
@@ -40,15 +41,14 @@ void AChickenPlayerController::SetupInputComponent() {
 
 	this->InputComponent->BindAction("Jump", IE_Pressed, this, &AChickenPlayerController::JumpAction);
 	this->InputComponent->BindAction("Jump", IE_Released, this, &AChickenPlayerController::StopJumpingAction);
-	this->InputComponent->BindAction("Start", IE_Pressed, this, &AChickenPlayerController::StartAction);
 	this->InputComponent->BindAction("Reset", IE_Pressed, this, &AChickenPlayerController::ResetAction);
 	this->InputComponent->BindAction("Pause", IE_Pressed, this, &AChickenPlayerController::PauseAction);
 }
 
 void AChickenPlayerController::JumpAction() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Jump button pressed"));
-	if (!bIsChickenJumping && !bIsChickenDead) {
-		bIsChickenJumping = true;
+	if (!bIsChickenJumping_ && !bIsChickenDead_) {
+		bIsChickenJumping_ = true;
 		auto ControlledPawn = Cast<ACharacter>(GetPawn());
 		if (IsValid(ControlledPawn)) {
 			UE_LOG(LogChickenPlayerController, Log, TEXT("%s jumped"), *ControlledPawn->GetName());
@@ -61,28 +61,23 @@ void AChickenPlayerController::JumpAction() {
 
 void AChickenPlayerController::StopJumpingAction() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Jump button released"));
-	bIsChickenJumping = false;
-}
-
-void AChickenPlayerController::StartAction() {
-	UE_LOG(LogChickenPlayerController, Log, TEXT("Start button pressed"));
-
-	auto GameMode = GetGameMode();
-	if (IsValid(GameMode)) {
-		GameMode->ProcessStartGame();
-	} else {
-		UE_LOG(LogChickenPlayerController, Warning, TEXT("Game mode is invalid!"));
-	}
+	bIsChickenJumping_ = false;
 }
 
 void AChickenPlayerController::ResetAction() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Reset button pressed"));
 
-	auto GameMode = GetGameMode();
+	auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
 	if (IsValid(GameMode)) {
 		const auto bIsGameReset = GameMode->ProcessResetGame();
 		if (bIsGameReset) {
-			bIsChickenDead = false;
+			bIsChickenDead_ = false;
+			auto ControlledPawn = GetPawn();
+			if (IsValid(ControlledPawn)) {
+				ControlledPawn->SetActorLocation({0.f, 0.f, 0.f}, false, nullptr, ETeleportType::ResetPhysics);
+			} else {
+				UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
+			}
 		}
 	}
 	else {
@@ -92,8 +87,4 @@ void AChickenPlayerController::ResetAction() {
 
 void AChickenPlayerController::PauseAction() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Pause button pressed"));
-}
-
-AKFCGameMode* AChickenPlayerController::GetGameMode() const {
-	return Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
 }

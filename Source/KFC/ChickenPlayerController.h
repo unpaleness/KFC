@@ -6,8 +6,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogChickenPlayerController, Log, All)
 
-class AKFCGameMode;
-
 UCLASS()
 class AChickenPlayerController : public APlayerController {
 	GENERATED_BODY()
@@ -26,16 +24,15 @@ protected:
 private:
 	void JumpAction();
 	void StopJumpingAction();
-	void StartAction();
 	void ResetAction();
 	void PauseAction();
 
-	AKFCGameMode* GetGameMode() const;
+protected:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+	float JumpAcceleration = 750.f;
 
 private:
-	bool bIsChickenJumping{false};
-	bool bIsChickenDead{ false };
+	bool bIsChickenJumping_ { false };
+	bool bIsChickenDead_ { false };
 
-	UPROPERTY(EditAnywhere, Category = "Chicken")
-	float JumpAcceleration = 1000.f;
 };

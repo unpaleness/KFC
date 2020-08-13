@@ -2,40 +2,34 @@
 
 #include "ChickenPlayerController.h"
 #include "ChickenCharacter.h"
+#include "UObject/ConstructorHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogKFCGameMode)
 
-AKFCGameMode::AKFCGameMode()
-{
-	bDelayedStart = true;
+AKFCGameMode::AKFCGameMode() {
+	static ConstructorHelpers::FClassFinder<APawn> BP_Chicken(TEXT("/Game/BP_Chicken"));
+	if (BP_Chicken.Class != nullptr) {
+		DefaultPawnClass = BP_Chicken.Class;
+	} else {
+		DefaultPawnClass = AChickenCharacter::StaticClass();
+	}
 	PlayerControllerClass = AChickenPlayerController::StaticClass();
-	DefaultPawnClass = AChickenCharacter::StaticClass();
 }
 
 void AKFCGameMode::ProcessDieChicken() {
 	EndMatch();
 }
 
-bool AKFCGameMode::ProcessStartGame() {
-	if (MatchState == MatchState::WaitingToStart) {
+bool AKFCGameMode::ProcessResetGame() {
+	if (MatchState == MatchState::WaitingPostMatch) {
 		StartMatch();
 		return true;
 	}
 	return false;
 }
-bool AKFCGameMode::ProcessResetGame() {
-	if (MatchState == MatchState::WaitingPostMatch) {
-		StartPlay();
-		return true;
-	}
-	return false;
-}
-
 
 void AKFCGameMode::StartPlay() {
-	if (MatchState == MatchState::EnteringMap) {
-		SetMatchState(MatchState::WaitingToStart);
-	}
+	Super::StartPlay();
 
 	UE_LOG(LogKFCGameMode, Log, TEXT("Game starts"));
 }
@@ -44,10 +38,14 @@ void AKFCGameMode::StartMatch() {
 	Super::StartMatch();
 
 	UE_LOG(LogKFCGameMode, Log, TEXT("Match begins"));
+
+	StartMatchDelegate.Broadcast();
 }
 
 void AKFCGameMode::EndMatch() {
 	Super::EndMatch();
 
 	UE_LOG(LogKFCGameMode, Log, TEXT("Match ends"));
+
+	EndMatchDelegate.Broadcast();
 }

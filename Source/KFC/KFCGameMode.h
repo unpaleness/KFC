@@ -8,6 +8,9 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogKFCGameMode, Log, All)
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStartMatchDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEndMatchDelegate);
+
 UCLASS(minimalapi)
 class AKFCGameMode : public AGameMode
 {
@@ -17,8 +20,10 @@ public:
 	AKFCGameMode();
 
 	void ProcessDieChicken();
-	bool ProcessStartGame();
 	bool ProcessResetGame();
+
+	FStartMatchDelegate StartMatchDelegate;
+	FEndMatchDelegate EndMatchDelegate;
 
 private:
 	virtual void StartPlay() override;
