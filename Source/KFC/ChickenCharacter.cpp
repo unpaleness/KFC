@@ -48,12 +48,7 @@ AChickenCharacter::AChickenCharacter() {
 }
 
 void AChickenCharacter::ProcessChickenHit(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit) {
-	UE_LOG(LogChickenPlayerController, Log, TEXT("Chicken hit"));
-
-	auto ChickenController = Cast<AChickenPlayerController>(GetController());
-	if (IsValid(ChickenController)) {
-		ChickenController->ProcessChickenHit();
-	}
+	ProcessChickenHitInner();
 }
 
 // Called when the game starts or when spawned
@@ -69,4 +64,13 @@ void AChickenCharacter::Tick(float DeltaTime) {
 // Called to bind functionality to input
 void AChickenCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AChickenCharacter::ProcessChickenHitInner() {
+	UE_LOG(LogChickenCharacter, Log, TEXT("Chicken hit"));
+
+	auto ChickenController = Cast<AChickenPlayerController>(GetController());
+	if (IsValid(ChickenController)) {
+		ChickenController->ProcessChickenHit();
+	}
 }

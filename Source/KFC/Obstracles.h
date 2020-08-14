@@ -18,13 +18,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent)
 	void OnStartMatch();
 
 	UFUNCTION()
 	void OnEndMatch();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent)
 	void ProcessHoleBeginOverlap(AActor* SelfActor, AActor* OtherActor);
 
 protected:
@@ -33,7 +33,7 @@ protected:
 private:
 	void Reset();
 	float GetRandomizedHoleHeight() const;
-	void RandomizeHoleHieght();
+	void RandomizeHoleHeight();
 
 	FVector GetLowerPieceLocation(float Offset) const;
 	FVector GetLowerPieceScale3D() const;
@@ -42,7 +42,11 @@ private:
 	FVector GetHoleLocation(float Offset) const;
 	FVector GetHoleScale3D() const;
 
-protected:
+	void CreateWallPiece();
+	void CreateWallHole();
+	void CreateWalls();
+
+public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
 	UStaticMeshComponent* Root;
 
@@ -58,39 +62,41 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
 	TArray<UBoxComponent*> WallHoles;
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+protected:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float Height{ 600.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float StepWidth{ 400.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float DistanceToFirstWall{ 500.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
-	float MaxLeftDistanceToReplaceWall{ 500.f };
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+	float MaxLeftDistanceToReplaceWall{ 1000.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float HoleSize { 200.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float MinWallPieceHeight{ 50.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float Speed{ 200.f };
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
 	float Depth{ 200.f };
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Mechanics")
-	int32 WallsCacheSize{ 3 };
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+	float HoleBoxScaleMultiplier{ 1.5f };
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
-	float HoleBoxScaleMultiplier{ 1.5f };
+	int32 Level{ 0 };
 
 private:
 	bool bIsRunning_{ false };
-	float nextHoleHeight_{ 0.f };
-	int32 level_{ 0 };
+	float NextHoleHeight_{ 0.f };
 	bool bPieceTypeSemaphore{ false };
+	int32 WallsCacheSize_{ 10 };
+	float DifficultyMultiplier_{ 1.f };
 };

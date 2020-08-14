@@ -52,7 +52,8 @@ void AChickenPlayerController::JumpAction() {
 		auto ControlledPawn = Cast<ACharacter>(GetPawn());
 		if (IsValid(ControlledPawn)) {
 			UE_LOG(LogChickenPlayerController, Log, TEXT("%s jumped"), *ControlledPawn->GetName());
-			ControlledPawn->LaunchCharacter({ 0.0f, 0.0f, JumpAcceleration }, false, false);
+			float RandomYOffset = FMath::IsNearlyEqual(ControlledPawn->GetActorLocation().Y, 0.f, 20.f) ? (FMath::RandBool() ? -20.f : 20.f) : -ControlledPawn->GetActorLocation().Y;
+			ControlledPawn->LaunchCharacter({ 0.0f, RandomYOffset, JumpAcceleration }, false, false);
 		} else {
 			UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
 		}
@@ -77,6 +78,8 @@ void AChickenPlayerController::ResetAction() {
 				ControlledPawn->SetActorLocation({0.f, 0.f, 0.f}, false, nullptr, ETeleportType::ResetPhysics);
 			} else {
 				UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
+				auto NewPawn = GetWorld()->SpawnActor<AChickenCharacter>();
+				Possess(NewPawn);
 			}
 		}
 	}
