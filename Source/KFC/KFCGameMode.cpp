@@ -7,12 +7,12 @@
 DEFINE_LOG_CATEGORY(LogKFCGameMode)
 
 AKFCGameMode::AKFCGameMode() {
-	//static ConstructorHelpers::FClassFinder<APawn> BP_Chicken(TEXT("/Game/BP_Chicken"));
-	//if (BP_Chicken.Class != nullptr) {
-	//	DefaultPawnClass = BP_Chicken.Class;
-	//} else {
+	static ConstructorHelpers::FClassFinder<APawn> BP_Chicken(TEXT("/Game/BP_Chicken"));
+	if (BP_Chicken.Class != nullptr) {
+		DefaultPawnClass = BP_Chicken.Class;
+	} else {
 		DefaultPawnClass = AChickenCharacter::StaticClass();
-	//}
+	}
 	PlayerControllerClass = AChickenPlayerController::StaticClass();
 }
 
