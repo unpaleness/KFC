@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Obstracles.generated.h"
 
 class UBoxComponent;
@@ -15,6 +16,7 @@ class AObstracles : public AActor {
 
 public:
 	AObstracles();
+	virtual void PostActorCreated() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 
@@ -42,9 +44,11 @@ private:
 	FVector GetHoleLocation(float Offset) const;
 	FVector GetHoleScale3D() const;
 
-	void CreateWallPiece();
-	void CreateWallHole();
-	void CreateWalls();
+	UStaticMeshComponent* CreateWall();
+	UBoxComponent* CreateHole();
+
+	void RecreateWalls();
+	void RecreateHoles();
 
 public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
@@ -57,10 +61,10 @@ public:
 	UStaticMeshComponent* Floor;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-	TArray<UStaticMeshComponent*> WallPieces;
+	TArray<UStaticMeshComponent*> Walls;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-	TArray<UBoxComponent*> WallHoles;
+	TArray<UBoxComponent*> Holes;
 
 protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
@@ -92,6 +96,12 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
 	int32 Level{ 0 };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics", meta = (ClampMin = "2", ClampMax = "40"))
+	int32 WallsCacheSize{ 10 };
+
+	UPROPERTY()
+	UStaticMesh* MeshPtr;
 
 private:
 	bool bIsRunning_{ false };

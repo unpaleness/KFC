@@ -44,6 +44,8 @@ AChickenCharacter::AChickenCharacter() {
 	// Configure character movement
 	GetCharacterMovement()->GravityScale = 2.f;
 
+	DisableComponentsSimulatePhysics();
+
 	OnActorHit.AddDynamic(this, &AChickenCharacter::ProcessChickenHit);
 }
 

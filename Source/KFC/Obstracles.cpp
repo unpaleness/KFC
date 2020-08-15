@@ -2,7 +2,6 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "UObject/ConstructorHelpers.h"
 
 #include "KFCGameMode.h"
 
@@ -14,43 +13,30 @@ AObstracles::AObstracles() {
 	Root = CreateDefaultSubobject<UStaticMeshComponent>("Root");
 	SetRootComponent(Root);
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshCube(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	static const auto MeshCube = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	MeshPtr = MeshCube.Object;
 
 	Roof = CreateDefaultSubobject<UStaticMeshComponent>("Roof");
-	if (MeshCube.Succeeded()) {
-		Roof->SetStaticMesh(MeshCube.Object);
-	}
+	Roof->SetStaticMesh(MeshPtr);
 	Roof->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 
 	Floor = CreateDefaultSubobject<UStaticMeshComponent>("Floor");
-	if (MeshCube.Succeeded()) {
-		Floor->SetStaticMesh(MeshCube.Object);
-	}
+	Floor->SetStaticMesh(MeshPtr);
 	Floor->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 
-	for (int32 i = 0; i < WallsCacheSize_ * 2; ++i) {
-		auto Wall = CreateDefaultSubobject<UStaticMeshComponent>(FName(FString::Format(TEXT("WallPiece_{0}"), { WallPieces.Num() })));
-		if (MeshCube.Succeeded()) {
-			Wall->SetStaticMesh(MeshCube.Object);
-		}
-		Wall->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-		WallPieces.Add(Wall);
-	}
-
-	for (int32 i = 0; i < WallsCacheSize_; ++i) {
-		auto Hole = CreateDefaultSubobject<UBoxComponent>(FName(FString::Format(TEXT("WallHole_{0}"), { WallHoles.Num() })));
-		Hole->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-		WallHoles.Add(Hole);
-	}
-
 	OnActorBeginOverlap.AddDynamic(this, &AObstracles::ProcessHoleBeginOverlap);
+}
+
+void AObstracles::PostActorCreated() {
+	RecreateWalls();
+	RecreateHoles();
 }
 
 void AObstracles::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 	if (bIsRunning_) {
-		for (auto Wall : WallPieces) {
+		for (auto Wall : Walls) {
 			Wall->AddRelativeLocation({ 0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f });
 			if (Wall->GetRelativeLocation().Y >= MaxLeftDistanceToReplaceWall) {
 				const auto Offset = Wall->GetRelativeLocation().Y - StepWidth * WallsCacheSize_;
@@ -61,7 +47,7 @@ void AObstracles::Tick(float DeltaTime) {
 				bPieceTypeSemaphore = !bPieceTypeSemaphore;
 			}
 		}
-		for (auto Hole : WallHoles) {
+		for (auto Hole : Holes) {
 			Hole->AddRelativeLocation({ 0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f });
 			if (Hole->GetRelativeLocation().Y >= MaxLeftDistanceToReplaceWall) {
 				const auto Offset = Hole->GetRelativeLocation().Y - StepWidth * WallsCacheSize_;
@@ -119,14 +105,42 @@ void AObstracles::BeginPlay() {
 }
 
 void AObstracles::Reset() {
+	const auto AtomicWallsCacheSize = WallsCacheSize;
+
+	if (AtomicWallsCacheSize != WallsCacheSize_) {
+		WallsCacheSize_ = AtomicWallsCacheSize;
+
+		RecreateWalls();
+		RecreateHoles();
+	}
+
 	for (int32 i = 0; i < WallsCacheSize_; ++i) {
 		RandomizeHoleHeight();
-		WallPieces[i * 2]->SetRelativeLocation(GetLowerPieceLocation(-DistanceToFirstWall - StepWidth * i));
-		WallPieces[i * 2]->SetRelativeScale3D(GetLowerPieceScale3D());
-		WallPieces[i * 2 + 1]->SetRelativeLocation(GetUpperPieceLocation(-DistanceToFirstWall - StepWidth * i));
-		WallPieces[i * 2 + 1]->SetRelativeScale3D(GetUpperPieceScale3D());
-		WallHoles[i]->SetRelativeLocation(GetHoleLocation(-DistanceToFirstWall - StepWidth * i));
-		WallHoles[i]->SetRelativeScale3D(GetHoleScale3D());
+		auto Wall1 = Walls[i * 2];
+		if (IsValid(Wall1)) {
+			Wall1->SetRelativeLocation(GetLowerPieceLocation(-DistanceToFirstWall - StepWidth * i));
+			Wall1->SetRelativeScale3D(GetLowerPieceScale3D());
+		} else {
+			UE_LOG(LogObstracles, Warning, TEXT("Lower wall is invalid!"));
+		}
+
+		auto Wall2 = Walls[i * 2 + 1];
+		if (IsValid(Wall2)) {
+			Wall2->SetRelativeLocation(GetUpperPieceLocation(-DistanceToFirstWall - StepWidth * i));
+			Wall2->SetRelativeScale3D(GetUpperPieceScale3D());
+		}
+		else {
+			UE_LOG(LogObstracles, Warning, TEXT("Upper wall is invalid!"));
+		}
+
+		auto Hole = Holes[i];
+		if (IsValid(Hole)) {
+			Hole->SetRelativeLocation(GetHoleLocation(-DistanceToFirstWall - StepWidth * i));
+			Hole->SetRelativeScale3D(GetHoleScale3D());
+		}
+		else {
+			UE_LOG(LogObstracles, Warning, TEXT("Hole is invalid!"));
+		}
 	}
 
 	Level = 0;
@@ -148,3 +162,62 @@ FVector AObstracles::GetUpperPieceLocation(float Offset) const { return { 0.f, O
 FVector AObstracles::GetUpperPieceScale3D() const { return { Depth / 100.f, 0.2f, ((Height - HoleSize) / 2.f - NextHoleHeight_) / 100.f }; }
 FVector AObstracles::GetHoleLocation(float Offset) const { return { 0.f, Offset, NextHoleHeight_ }; }
 FVector AObstracles::GetHoleScale3D() const { return FVector(Depth / 100.f, 0.2f, HoleSize / 100.f) * HoleBoxScaleMultiplier; }
+
+UStaticMeshComponent* AObstracles::CreateWall() {
+	auto Wall = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(GetWorld(), UStaticMeshComponent::StaticClass()));
+	if (!IsValid(Wall)) {
+		UE_LOG(LogObstracles, Warning, TEXT("Create new wall piece failed!"));
+		return nullptr;
+	}
+
+	Wall->RegisterComponent();
+	Wall->SetStaticMesh(MeshPtr);
+	Wall->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+
+	return Wall;
+}
+
+UBoxComponent* AObstracles::CreateHole() {
+	auto Hole = NewObject<UBoxComponent>(this, MakeUniqueObjectName(GetWorld(), UBoxComponent::StaticClass()));
+	if (!IsValid(Hole)) {
+		UE_LOG(LogObstracles, Warning, TEXT("Create new wall hole failed!"));
+		return nullptr;
+	}
+
+	Hole->RegisterComponent();
+	Hole->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+
+	return Hole;
+}
+
+void AObstracles::RecreateWalls() {
+	for (auto Wall : Walls) {
+		if (IsValid(Wall)) {
+			Wall->DestroyComponent();
+		}
+	}
+	Walls.Empty();
+	Walls.Reserve(WallsCacheSize_ * 2);
+	for (int32 i = 0; i < WallsCacheSize_ * 2; ++i) {
+		auto Wall = CreateWall();
+		if (IsValid(Wall)) {
+			Walls.Add(Wall);
+		}
+	}
+}
+
+void AObstracles::RecreateHoles() {
+	for (auto Hole : Holes) {
+		if (IsValid(Hole)) {
+			Hole->DestroyComponent();
+		}
+	}
+	Holes.Empty();
+	Holes.Reserve(WallsCacheSize_);
+	for (int32 i = 0; i < WallsCacheSize_; ++i) {
+		auto Hole = CreateHole();
+		if (IsValid(Hole)) {
+			Holes.Add(Hole);
+		}
+	}
+}
