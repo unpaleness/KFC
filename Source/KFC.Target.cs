@@ -3,12 +3,10 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class KFCTarget : TargetRules
-{
-	public KFCTarget(TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.Add("KFC");
-	}
+public class KFCTarget : TargetRules {
+  public KFCTarget(TargetInfo Target) : base(Target) {
+    Type = TargetType.Game;
+    DefaultBuildSettings = BuildSettingsVersion.V2;
+    ExtraModuleNames.Add("KFC");
+  }
 }

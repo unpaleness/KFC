@@ -3,12 +3,10 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class KFCEditorTarget : TargetRules
-{
-	public KFCEditorTarget(TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.Add("KFC");
-	}
+public class KFCEditorTarget : TargetRules {
+  public KFCEditorTarget(TargetInfo Target) : base(Target) {
+    Type = TargetType.Editor;
+    DefaultBuildSettings = BuildSettingsVersion.V2;
+    ExtraModuleNames.Add("KFC");
+  }
 }

@@ -12,52 +12,53 @@ DEFINE_LOG_CATEGORY(LogChickenCharacter)
 
 // Sets default values
 AChickenCharacter::AChickenCharacter() {
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshCube(TEXT("SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
+  static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalMeshCube(
+      TEXT("SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
 
-	if (SkeletalMeshCube.Succeeded()) {
-		GetMesh()->SetSkeletalMesh(SkeletalMeshCube.Object);
-	}
-	//GetMesh()->SetRelativeScale3D(FVector(0.5f));
+  if (SkeletalMeshCube.Succeeded()) {
+    GetMesh()->SetSkeletalMesh(SkeletalMeshCube.Object);
+  }
+  // GetMesh()->SetRelativeScale3D(FVector(0.5f));
 
-	GetCapsuleComponent()->InitCapsuleSize(25.f, 25.0f);
+  GetCapsuleComponent()->InitCapsuleSize(25.f, 25.0f);
 
-	// Don't rotate when the controller rotates.
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
+  // Don't rotate when the controller rotates.
+  bUseControllerRotationPitch = false;
+  bUseControllerRotationYaw = false;
+  bUseControllerRotationRoll = false;
 
-	// Create a camera boom attached to the root (capsule)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->SetUsingAbsoluteLocation(true);
-	CameraBoom->bDoCollisionTest = false;
-	CameraBoom->TargetArmLength = 700.f;
-	CameraBoom->SocketOffset = FVector(0.f, 0.f, 0.f);
-	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+  // Create a camera boom attached to the root (capsule)
+  CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+  CameraBoom->SetupAttachment(RootComponent);
+  CameraBoom->SetUsingAbsoluteRotation(true);
+  CameraBoom->SetUsingAbsoluteLocation(true);
+  CameraBoom->bDoCollisionTest = false;
+  CameraBoom->TargetArmLength = 700.f;
+  CameraBoom->SocketOffset = FVector(0.f, 0.f, 0.f);
+  CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
-	// Create a camera and attach to boom
-	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
-	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
+  // Create a camera and attach to boom
+  SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
+  SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+  SideViewCameraComponent->bUsePawnControlRotation = false;  // We don't want the controller rotating the camera
 
-	// Configure character movement
-	GetCharacterMovement()->GravityScale = 0.f;
+  // Configure character movement
+  GetCharacterMovement()->GravityScale = 0.f;
 
-	DisableComponentsSimulatePhysics();
+  DisableComponentsSimulatePhysics();
 }
 
 // Called when the game starts or when spawned
 void AChickenCharacter::BeginPlay() {
-	Super::BeginPlay();
+  Super::BeginPlay();
 }
 
 // Called every frame
 void AChickenCharacter::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
+  Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
 void AChickenCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+  Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
