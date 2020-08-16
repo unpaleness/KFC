@@ -72,7 +72,7 @@ class AObstracles : public AActor {
 
  public:
   UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  UStaticMeshComponent* Root;
+  USceneComponent* Root;
 
   UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
   UStaticMeshComponent* Roof;

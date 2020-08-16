@@ -33,8 +33,8 @@ AChickenCharacter::AChickenCharacter() {
   CameraBoom->SetUsingAbsoluteRotation(true);
   CameraBoom->SetUsingAbsoluteLocation(true);
   CameraBoom->bDoCollisionTest = false;
-  CameraBoom->TargetArmLength = 700.f;
-  CameraBoom->SocketOffset = FVector(0.f, 0.f, 0.f);
+  CameraBoom->TargetArmLength = CameraArmLength;
+  CameraBoom->SocketOffset = CameraOffset;
   CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
   // Create a camera and attach to boom
@@ -48,17 +48,19 @@ AChickenCharacter::AChickenCharacter() {
   DisableComponentsSimulatePhysics();
 }
 
-// Called when the game starts or when spawned
-void AChickenCharacter::BeginPlay() {
-  Super::BeginPlay();
-}
-
-// Called every frame
 void AChickenCharacter::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
 }
 
-// Called to bind functionality to input
 void AChickenCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
   Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AChickenCharacter::OnConstruction(const FTransform& Transform) {
+  CameraBoom->TargetArmLength = CameraArmLength;
+  CameraBoom->SocketOffset = CameraOffset;
+}
+
+void AChickenCharacter::BeginPlay() {
+  Super::BeginPlay();
 }

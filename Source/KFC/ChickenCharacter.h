@@ -24,17 +24,19 @@ class AChickenCharacter : public ACharacter {
   class USpringArmComponent* CameraBoom;
 
  public:
-  // Sets default values for this pawn's properties
   AChickenCharacter();
+  virtual void Tick(float DeltaTime) override;
+  virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+  virtual void OnConstruction(const FTransform& Transform) override;
 
  protected:
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
- public:
-  // Called every frame
-  virtual void Tick(float DeltaTime) override;
+protected:
+  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  FVector CameraOffset {0.f, 0.f, 0.f};
 
-  // Called to bind functionality to input
-  virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  float CameraArmLength {700.f};
 };

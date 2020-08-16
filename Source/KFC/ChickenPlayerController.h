@@ -38,7 +38,7 @@ class AChickenPlayerController : public APlayerController {
   float JumpAcceleration{750.f};
 
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
-  FVector StartPoint{0.f, 0.f, 0.f};
+  FVector StartPoint{0.f, 400.f, 0.f};
 
  private:
   bool bIsChickenJumping_{false};

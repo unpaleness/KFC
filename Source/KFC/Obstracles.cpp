@@ -18,9 +18,8 @@ const auto CollisionProfileName = TEXT("OverlapAllDynamic");
 AObstracles::AObstracles() {
   PrimaryActorTick.bCanEverTick = true;
 
-  Root = CreateDefaultSubobject<UStaticMeshComponent>("Root");
+  Root = CreateDefaultSubobject<USceneComponent>("Root");
   SetRootComponent(Root);
-  Root->SetCollisionProfileName(CollisionProfileName);
 
   static const auto MeshCube =
       ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
@@ -40,8 +39,6 @@ AObstracles::AObstracles() {
 void AObstracles::PostActorCreated() {
   Roof->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
   Floor->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
-  RecreateWalls();
-  RecreateHoles();
 }
 
 void AObstracles::Tick(float DeltaTime) {
