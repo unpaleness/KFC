@@ -14,8 +14,13 @@ public:
 	AChickenPlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
 
-	UFUNCTION()
 	void ProcessChickenHit();
+
+	UFUNCTION()
+	void OnStartMatch();
+
+	UFUNCTION()
+	void OnEndMatch();
 
 protected:
 	virtual void BeginPlay() override;
@@ -29,7 +34,10 @@ private:
 
 protected:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
-	float JumpAcceleration = 750.f;
+	float JumpAcceleration{ 750.f };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+	FVector StartPoint{0.f, 0.f, 0.f};
 
 private:
 	bool bIsChickenJumping_ { false };

@@ -1,6 +1,7 @@
 #include "ChickenPlayerController.h"
 
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Pawn.h"
 
 #include "ChickenCharacter.h"
@@ -17,7 +18,7 @@ void AChickenPlayerController::PlayerTick(float DeltaTime) {
 }
 
 void AChickenPlayerController::ProcessChickenHit() {
-	UE_LOG(LogChickenPlayerController, Log, TEXT("Chicken hit"));
+	UE_LOG(LogChickenPlayerController, Log, TEXT("Process chicken hit"));
 
 	bIsChickenDead_ = true;
 
@@ -30,10 +31,53 @@ void AChickenPlayerController::ProcessChickenHit() {
 	}
 }
 
+void AChickenPlayerController::OnStartMatch() {
+	UE_LOG(LogChickenPlayerController, Log, TEXT("On start match"));
+
+	bIsChickenDead_ = false;
+	auto ControlledCharacter = Cast<ACharacter>(GetPawn());
+	if (IsValid(ControlledCharacter)) {
+		ControlledCharacter->SetActorLocation(StartPoint, false, nullptr, ETeleportType::ResetPhysics);
+		ControlledCharacter->GetCharacterMovement()->StopMovementImmediately();
+		ControlledCharacter->GetCharacterMovement()->GravityScale = 2.f;
+	}
+	else {
+		UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
+		auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
+		if (!IsValid(GameMode)) return;
+		auto NewCharacter = Cast<ACharacter>(GetWorld()->SpawnActor(GameMode->DefaultPawnClass));
+		if (IsValid(NewCharacter)) {
+			NewCharacter->SetActorLocation(StartPoint, false, nullptr, ETeleportType::ResetPhysics);
+			NewCharacter->GetCharacterMovement()->StopMovementImmediately();
+			NewCharacter->GetCharacterMovement()->GravityScale = 2.f;
+			Possess(NewCharacter);
+		}
+		else {
+			UE_LOG(LogChickenPlayerController, Warning, TEXT("Failed to spawn new pawn!"));
+		}
+	}
+}
+
+void AChickenPlayerController::OnEndMatch() {
+	UE_LOG(LogChickenPlayerController, Log, TEXT("On end match"));
+
+	auto ControlledCharacter = Cast<ACharacter>(GetPawn());
+	if (IsValid(ControlledCharacter)) {
+		ControlledCharacter->GetCharacterMovement()->GravityScale = 0.f;
+		ControlledCharacter->GetCharacterMovement()->StopMovementImmediately();
+	}
+}
+
 void AChickenPlayerController::BeginPlay() {
 	Super::BeginPlay();
 
 	bIsChickenDead_ = false;
+
+	auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
+	if (IsValid(GameMode)) {
+		GameMode->StartMatchDelegate.AddDynamic(this, &AChickenPlayerController::OnStartMatch);
+		GameMode->EndMatchDelegate.AddDynamic(this, &AChickenPlayerController::OnEndMatch);
+	}
 }
 
 void AChickenPlayerController::SetupInputComponent() {
@@ -49,10 +93,10 @@ void AChickenPlayerController::JumpAction() {
 	UE_LOG(LogChickenPlayerController, Log, TEXT("Jump button pressed"));
 	if (!bIsChickenJumping_ && !bIsChickenDead_) {
 		bIsChickenJumping_ = true;
-		auto ControlledPawn = Cast<ACharacter>(GetPawn());
-		if (IsValid(ControlledPawn)) {
-			UE_LOG(LogChickenPlayerController, Log, TEXT("%s jumped"), *ControlledPawn->GetName());
-			ControlledPawn->LaunchCharacter({ 0.f, 0.f, JumpAcceleration }, false, false);
+		auto ControlledCharacter = Cast<ACharacter>(GetPawn());
+		if (IsValid(ControlledCharacter)) {
+			UE_LOG(LogChickenPlayerController, Log, TEXT("%s jumped"), *ControlledCharacter->GetName());
+			ControlledCharacter->LaunchCharacter({ 0.f, 0.f, JumpAcceleration }, false, false);
 		} else {
 			UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
 		}
@@ -69,22 +113,7 @@ void AChickenPlayerController::ResetAction() {
 
 	auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
 	if (IsValid(GameMode)) {
-		const auto bIsGameReset = GameMode->ProcessResetGame();
-		if (bIsGameReset) {
-			bIsChickenDead_ = false;
-			auto ControlledPawn = GetPawn();
-			if (IsValid(ControlledPawn)) {
-				ControlledPawn->SetActorLocation({0.f, 0.f, 0.f}, false, nullptr, ETeleportType::ResetPhysics);
-			} else {
-				UE_LOG(LogChickenPlayerController, Warning, TEXT("Controlled pawn is invalid!"));
-				auto NewPawn = Cast<APawn>(GetWorld()->SpawnActor(GameMode->DefaultPawnClass));
-				if (IsValid(NewPawn)) {
-					Possess(NewPawn);
-				} else {
-					UE_LOG(LogChickenPlayerController, Warning, TEXT("Failed to spawn new pawn!"));
-				}
-			}
-		}
+		GameMode->ProcessResetGame();
 	}
 	else {
 		UE_LOG(LogChickenPlayerController, Warning, TEXT("Game mode is invalid!"));

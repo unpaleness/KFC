@@ -23,11 +23,17 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void OnStartMatch();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintNativeEvent)
 	void OnEndMatch();
 
 	UFUNCTION(BlueprintNativeEvent)
-	void ProcessHoleBeginOverlap(AActor* SelfActor, AActor* OtherActor);
+	void ProcessHoleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ProcessHoleEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void ProcessSolidBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 protected:
 	virtual void BeginPlay() override;
@@ -109,4 +115,5 @@ private:
 	bool bPieceTypeSemaphore{ false };
 	int32 WallsCacheSize_{ 10 };
 	float DifficultyMultiplier_{ 1.f };
+	bool bIsInHole{ false };
 };

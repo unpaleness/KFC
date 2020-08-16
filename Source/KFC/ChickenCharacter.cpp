@@ -42,15 +42,9 @@ AChickenCharacter::AChickenCharacter() {
 	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
 
 	// Configure character movement
-	GetCharacterMovement()->GravityScale = 2.f;
+	GetCharacterMovement()->GravityScale = 0.f;
 
 	DisableComponentsSimulatePhysics();
-
-	OnActorHit.AddDynamic(this, &AChickenCharacter::ProcessChickenHit);
-}
-
-void AChickenCharacter::ProcessChickenHit(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& Hit) {
-	ProcessChickenHitInner();
 }
 
 // Called when the game starts or when spawned
@@ -66,13 +60,4 @@ void AChickenCharacter::Tick(float DeltaTime) {
 // Called to bind functionality to input
 void AChickenCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
-
-void AChickenCharacter::ProcessChickenHitInner() {
-	UE_LOG(LogChickenCharacter, Log, TEXT("Chicken hit"));
-
-	auto ChickenController = Cast<AChickenPlayerController>(GetController());
-	if (IsValid(ChickenController)) {
-		ChickenController->ProcessChickenHit();
-	}
 }

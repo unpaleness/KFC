@@ -2,16 +2,25 @@
 
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "ChickenCharacter.h"
+#include "ChickenPlayerController.h"
 
 #include "KFCGameMode.h"
 
 DEFINE_LOG_CATEGORY(LogObstracles)
+
+namespace {
+
+const auto CollisionProfileName = TEXT("OverlapAllDynamic");
+
+}  // namespace
 
 AObstracles::AObstracles() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	Root = CreateDefaultSubobject<UStaticMeshComponent>("Root");
 	SetRootComponent(Root);
+	Root->SetCollisionProfileName(CollisionProfileName);
 
 	static const auto MeshCube = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 	MeshPtr = MeshCube.Object;
@@ -19,15 +28,17 @@ AObstracles::AObstracles() {
 	Roof = CreateDefaultSubobject<UStaticMeshComponent>("Roof");
 	Roof->SetStaticMesh(MeshPtr);
 	Roof->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+	Roof->SetCollisionProfileName(CollisionProfileName);
 
 	Floor = CreateDefaultSubobject<UStaticMeshComponent>("Floor");
 	Floor->SetStaticMesh(MeshPtr);
 	Floor->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-
-	OnActorBeginOverlap.AddDynamic(this, &AObstracles::ProcessHoleBeginOverlap);
+	Floor->SetCollisionProfileName(CollisionProfileName);
 }
 
 void AObstracles::PostActorCreated() {
+	Roof->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
+	Floor->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
 	RecreateWalls();
 	RecreateHoles();
 }
@@ -76,22 +87,54 @@ void AObstracles::OnStartMatch_Implementation() {
 	bIsRunning_ = true;
 }
 
-void AObstracles::OnEndMatch() {
+void AObstracles::OnEndMatch_Implementation() {
 	UE_LOG(LogObstracles, Log, TEXT("Match ends"));
 
 	bIsRunning_ = false;
 }
 
-void AObstracles::ProcessHoleBeginOverlap_Implementation(AActor* SelfActor, AActor* OtherActor) {
-	if (this != SelfActor || this == OtherActor) {
+void AObstracles::ProcessHoleBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	if (this == OtherActor) {
 		return;
 	}
 
 	UE_LOG(LogObstracles, Log, TEXT("Hole began overlap with %s"), *OtherActor->GetClass()->GetName());
 
+	bIsInHole = true;
+}
+
+void AObstracles::ProcessHoleEndOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+	if (this == OtherActor) {
+		return;
+	}
+
+	UE_LOG(LogObstracles, Log, TEXT("Hole ended overlap with %s"), *OtherActor->GetClass()->GetName());
+
+	if (!bIsInHole) return;
+
+	bIsInHole = false;
+
 	++Level;
 	DifficultyMultiplier_ = 1.f + Level / 10.f;
 	RandomizeHoleHeight();
+}
+
+void AObstracles::ProcessSolidBeginOverlap_Implementation(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	if (this == OtherActor) {
+		return;
+	}
+
+	UE_LOG(LogObstracles, Log, TEXT("Solid began overlap with %s"), *OtherActor->GetClass()->GetName());
+
+	auto ChickenCharacter = Cast<AChickenCharacter>(OtherActor);
+
+	if (!IsValid(ChickenCharacter)) return;
+
+	auto ChickenController = Cast<AChickenPlayerController>(ChickenCharacter->GetController());
+
+	if (!IsValid(ChickenController)) return;
+
+	ChickenController->ProcessChickenHit();
 }
 
 void AObstracles::BeginPlay() {
@@ -105,14 +148,10 @@ void AObstracles::BeginPlay() {
 }
 
 void AObstracles::Reset() {
-	const auto AtomicWallsCacheSize = WallsCacheSize;
+	WallsCacheSize_ = WallsCacheSize;
 
-	if (AtomicWallsCacheSize != WallsCacheSize_) {
-		WallsCacheSize_ = AtomicWallsCacheSize;
-
-		RecreateWalls();
-		RecreateHoles();
-	}
+	RecreateWalls();
+	RecreateHoles();
 
 	for (int32 i = 0; i < WallsCacheSize_; ++i) {
 		RandomizeHoleHeight();
@@ -173,6 +212,8 @@ UStaticMeshComponent* AObstracles::CreateWall() {
 	Wall->RegisterComponent();
 	Wall->SetStaticMesh(MeshPtr);
 	Wall->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+	Wall->SetCollisionProfileName(CollisionProfileName);
+	Wall->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
 
 	return Wall;
 }
@@ -186,6 +227,9 @@ UBoxComponent* AObstracles::CreateHole() {
 
 	Hole->RegisterComponent();
 	Hole->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+	Hole->SetCollisionProfileName(CollisionProfileName);
+	Hole->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessHoleBeginOverlap);
+	Hole->OnComponentEndOverlap.AddDynamic(this, &AObstracles::ProcessHoleEndOverlap);
 
 	return Hole;
 }
