@@ -7,13 +7,25 @@
 DEFINE_LOG_CATEGORY(LogKFCGameMode)
 
 AKFCGameMode::AKFCGameMode() {
-  static ConstructorHelpers::FClassFinder<APawn> BP_Chicken(TEXT("/Game/BP_Chicken"));
-  if (BP_Chicken.Class != nullptr) {
-    DefaultPawnClass = BP_Chicken.Class;
+  static const TCHAR* BPPawnName = TEXT("/Game/BP_Chicken");
+  static const ConstructorHelpers::FClassFinder<APawn> BPChicken(BPPawnName);
+  if (BPChicken.Class != nullptr) {
+    DefaultPawnClass = BPChicken.Class;
   } else {
+    UE_LOG(LogKFCGameMode, Warning, TEXT("Blueprint Pawn %s not found, falling back to %s"), BPPawnName,
+           *AChickenCharacter::StaticClass()->GetName());
     DefaultPawnClass = AChickenCharacter::StaticClass();
   }
-  PlayerControllerClass = AChickenPlayerController::StaticClass();
+
+  static const TCHAR* BPPlayerControllerName = TEXT("/Game/BP_ChickenController");
+  static const ConstructorHelpers::FClassFinder<APlayerController> BPChickenController(BPPlayerControllerName);
+  if (BPChickenController.Class != nullptr) {
+    PlayerControllerClass = BPChickenController.Class;
+  } else {
+    UE_LOG(LogKFCGameMode, Warning, TEXT("Blueprint PlayerController %s not found, falling back to %s"),
+           BPPlayerControllerName, *AChickenPlayerController::StaticClass()->GetName());
+    PlayerControllerClass = AChickenPlayerController::StaticClass();
+  }
 }
 
 void AKFCGameMode::ProcessDieChicken() {

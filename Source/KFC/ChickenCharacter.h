@@ -33,10 +33,10 @@ class AChickenCharacter : public ACharacter {
   // Called when the game starts or when spawned
   virtual void BeginPlay() override;
 
-protected:
+ protected:
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
-  FVector CameraOffset {0.f, 0.f, 0.f};
+  FVector CameraOffset{0.f, 0.f, 0.f};
 
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
-  float CameraArmLength {700.f};
+  float CameraArmLength{700.f};
 };

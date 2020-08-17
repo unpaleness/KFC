@@ -8,6 +8,7 @@
 
 class UBoxComponent;
 class UStaticMeshComponent;
+class URoomComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogObstracles, Log, All)
 
@@ -75,16 +76,13 @@ class AObstracles : public AActor {
   USceneComponent* Root;
 
   UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  UStaticMeshComponent* Roof;
-
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  UStaticMeshComponent* Floor;
-
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
   TArray<UStaticMeshComponent*> Walls;
 
   UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
   TArray<UBoxComponent*> Holes;
+
+  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
+  URoomComponent* Room;
 
  protected:
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
@@ -117,9 +115,15 @@ class AObstracles : public AActor {
   UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
   int32 Level{0};
 
+  /** Amount of main rooms with obstracles */
   UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics", meta = (ClampMin = "2", ClampMax = "40"))
-  int32 WallsCacheSize{10};
+  int32 RoomsCacheSize{10};
 
+  /** Amount of empty rooms to warm up */
+  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics", meta = (ClampMin = "2", ClampMax = "40"))
+  int32 EntryRoomsCacheSize{3};
+
+  /** Mesh for all inner objects */
   UPROPERTY()
   UStaticMesh* MeshPtr;
 
@@ -127,7 +131,8 @@ class AObstracles : public AActor {
   bool bIsRunning_{false};
   float NextHoleHeight_{0.f};
   bool bPieceTypeSemaphore{false};
-  int32 WallsCacheSize_{10};
+  int32 RoomsCacheSize_{10};
+  int32 EntryRoomsCacheSize_{3};
   float DifficultyMultiplier_{1.f};
   bool bIsInHole{false};
 };

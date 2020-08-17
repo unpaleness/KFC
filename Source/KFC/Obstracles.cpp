@@ -4,6 +4,7 @@
 #include "ChickenPlayerController.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "RoomComponent.h"
 
 #include "KFCGameMode.h"
 
@@ -25,20 +26,13 @@ AObstracles::AObstracles() {
       ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
   MeshPtr = MeshCube.Object;
 
-  Roof = CreateDefaultSubobject<UStaticMeshComponent>("Roof");
-  Roof->SetStaticMesh(MeshPtr);
-  Roof->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-  Roof->SetCollisionProfileName(CollisionProfileName);
-
-  Floor = CreateDefaultSubobject<UStaticMeshComponent>("Floor");
-  Floor->SetStaticMesh(MeshPtr);
-  Floor->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-  Floor->SetCollisionProfileName(CollisionProfileName);
+  Room = CreateDefaultSubobject<URoomComponent>("Room");
+  Room->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+  Room->RegisterComponent();
 }
 
 void AObstracles::PostActorCreated() {
-  Roof->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
-  Floor->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
+  // Room->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
 }
 
 void AObstracles::Tick(float DeltaTime) {
@@ -48,7 +42,7 @@ void AObstracles::Tick(float DeltaTime) {
     for (auto Wall : Walls) {
       Wall->AddRelativeLocation({0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f});
       if (Wall->GetRelativeLocation().Y >= MaxLeftDistanceToReplaceWall) {
-        const auto Offset = Wall->GetRelativeLocation().Y - StepWidth * WallsCacheSize_;
+        const auto Offset = Wall->GetRelativeLocation().Y - StepWidth * RoomsCacheSize_;
         const auto NewLocation = bPieceTypeSemaphore ? GetLowerPieceLocation(Offset) : GetUpperPieceLocation(Offset);
         const auto NewScale3D = bPieceTypeSemaphore ? GetLowerPieceScale3D() : GetUpperPieceScale3D();
         Wall->SetRelativeLocation(NewLocation);
@@ -59,7 +53,7 @@ void AObstracles::Tick(float DeltaTime) {
     for (auto Hole : Holes) {
       Hole->AddRelativeLocation({0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f});
       if (Hole->GetRelativeLocation().Y >= MaxLeftDistanceToReplaceWall) {
-        const auto Offset = Hole->GetRelativeLocation().Y - StepWidth * WallsCacheSize_;
+        const auto Offset = Hole->GetRelativeLocation().Y - StepWidth * RoomsCacheSize_;
         Hole->SetRelativeLocation(GetHoleLocation(Offset));
         Hole->SetRelativeScale3D(GetHoleScale3D());
       }
@@ -68,11 +62,9 @@ void AObstracles::Tick(float DeltaTime) {
 }
 
 void AObstracles::OnConstruction(const FTransform& Transform) {
-  Roof->SetRelativeLocation({0.f, 0.f, Height / 2.f});
-  Roof->SetRelativeScale3D({Depth / 100.f, 16.f, 0.2f});
-
-  Floor->SetRelativeLocation({0.f, 0.f, -Height / 2.f});
-  Floor->SetRelativeScale3D({Depth / 100.f, 16.f, 0.2f});
+  Room->ReCreateSubComponents();
+  Room->SetRelativeLocation({0.f, 0.f, 300.f});
+  Room->SetDimensions({Depth, StepWidth, Height}, 20.f);
 
   Reset();
 }
@@ -162,12 +154,12 @@ void AObstracles::BeginPlay() {
 }
 
 void AObstracles::Reset() {
-  WallsCacheSize_ = WallsCacheSize;
+  RoomsCacheSize_ = RoomsCacheSize;
 
   RecreateWalls();
   RecreateHoles();
 
-  for (int32 i = 0; i < WallsCacheSize_; ++i) {
+  for (int32 i = 0; i < RoomsCacheSize_; ++i) {
     RandomizeHoleHeight();
     auto Wall1 = Walls[i * 2];
     if (IsValid(Wall1)) {
@@ -234,10 +226,10 @@ UStaticMeshComponent* AObstracles::CreateWall() {
     return nullptr;
   }
 
-  Wall->RegisterComponent();
   Wall->SetStaticMesh(MeshPtr);
   Wall->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
   Wall->SetCollisionProfileName(CollisionProfileName);
+  Wall->RegisterComponent();
   Wall->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessSolidBeginOverlap);
 
   return Wall;
@@ -250,9 +242,9 @@ UBoxComponent* AObstracles::CreateHole() {
     return nullptr;
   }
 
-  Hole->RegisterComponent();
   Hole->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
   Hole->SetCollisionProfileName(CollisionProfileName);
+  Hole->RegisterComponent();
   Hole->OnComponentBeginOverlap.AddDynamic(this, &AObstracles::ProcessHoleBeginOverlap);
   Hole->OnComponentEndOverlap.AddDynamic(this, &AObstracles::ProcessHoleEndOverlap);
 
@@ -266,8 +258,8 @@ void AObstracles::RecreateWalls() {
     }
   }
   Walls.Empty();
-  Walls.Reserve(WallsCacheSize_ * 2);
-  for (int32 i = 0; i < WallsCacheSize_ * 2; ++i) {
+  Walls.Reserve(RoomsCacheSize_ * 2);
+  for (int32 i = 0; i < RoomsCacheSize_ * 2; ++i) {
     auto Wall = CreateWall();
     if (IsValid(Wall)) {
       Walls.Add(Wall);
@@ -282,8 +274,8 @@ void AObstracles::RecreateHoles() {
     }
   }
   Holes.Empty();
-  Holes.Reserve(WallsCacheSize_);
-  for (int32 i = 0; i < WallsCacheSize_; ++i) {
+  Holes.Reserve(RoomsCacheSize_);
+  for (int32 i = 0; i < RoomsCacheSize_; ++i) {
     auto Hole = CreateHole();
     if (IsValid(Hole)) {
       Holes.Add(Hole);
