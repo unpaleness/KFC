@@ -34,10 +34,10 @@ class AChickenPlayerController : public APlayerController {
   void PauseAction();
 
  protected:
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  UPROPERTY(EditDefaultsOnly, Category = "Chicken")
   float JumpAcceleration{750.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  UPROPERTY(EditDefaultsOnly, Category = "Chicken")
   FVector StartPoint{0.f, 0.f, 0.f};
 
  private:

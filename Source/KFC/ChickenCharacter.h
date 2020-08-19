@@ -15,14 +15,6 @@ UCLASS()
 class AChickenCharacter : public ACharacter {
   GENERATED_BODY()
 
-  /** Side view camera */
-  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-  class UCameraComponent* SideViewCameraComponent;
-
-  /** Camera boom positioning the camera beside the character */
-  UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-  class USpringArmComponent* CameraBoom;
-
  public:
   AChickenCharacter();
   virtual void Tick(float DeltaTime) override;
@@ -34,9 +26,15 @@ class AChickenCharacter : public ACharacter {
   virtual void BeginPlay() override;
 
  protected:
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "Camera")
+  UCameraComponent* SideViewCameraComponent;
+
+  UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "Camera")
+  USpringArmComponent* CameraBoom;
+
+  UPROPERTY(EditDefaultsOnly, Category = "Chicken")
   FVector CameraOffset{0.f, 0.f, 0.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Chicken")
+  UPROPERTY(EditDefaultsOnly, Category = "Chicken")
   float CameraArmLength{700.f};
 };

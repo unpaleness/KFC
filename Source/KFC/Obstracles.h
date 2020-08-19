@@ -6,9 +6,10 @@
 
 #include "Obstracles.generated.h"
 
+class UEmptyRoomComponent;
 class UBoxComponent;
-class UStaticMeshComponent;
 class URoomComponent;
+class UStaticMeshComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogObstracles, Log, All)
 
@@ -55,73 +56,59 @@ class AObstracles : public AActor {
 
  private:
   void Reset();
-  float GetRandomizedHoleHeight() const;
-  void RandomizeHoleHeight();
+  void RecreateEntryRooms();
+  void RecreateRooms();
 
-  FVector GetLowerPieceLocation(float Offset) const;
-  FVector GetLowerPieceScale3D() const;
-  FVector GetUpperPieceLocation(float Offset) const;
-  FVector GetUpperPieceScale3D() const;
-  FVector GetHoleLocation(float Offset) const;
-  FVector GetHoleScale3D() const;
-
-  UStaticMeshComponent* CreateWall();
-  UBoxComponent* CreateHole();
-
-  void RecreateWalls();
-  void RecreateHoles();
-
- public:
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  USceneComponent* Root;
-
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  TArray<UStaticMeshComponent*> Walls;
-
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  TArray<UBoxComponent*> Holes;
-
-  UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Components")
-  URoomComponent* Room;
+  void TickEntryRooms(const float DeltaTime);
+  void TickRooms(const float DeltaTime);
 
  protected:
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY()
+  USceneComponent* Root;
+
+  UPROPERTY()
+  TArray<UEmptyRoomComponent*> EntryRooms;
+
+  UPROPERTY()
+  TArray<URoomComponent*> Rooms;
+
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float Height{600.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float StepWidth{400.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
-  float DistanceToFirstWall{500.f};
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
+  float DistanceToFirstRoom{800.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
-  float MaxLeftDistanceToReplaceWall{1000.f};
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
+  float MaxLeftDistanceToReplaceRoom{1000.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float HoleSize{200.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float MinWallPieceHeight{50.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float Speed{200.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
   float Depth{200.f};
 
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics")
-  float HoleBoxScaleMultiplier{1.5f};
-
-  UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Mechanics")
-  int32 Level{0};
+  UPROPERTY(EditAnywhere, Category = "Mechanics")
+  float WallWidth{20.f};
 
   /** Amount of main rooms with obstracles */
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics", meta = (ClampMin = "2", ClampMax = "40"))
-  int32 RoomsCacheSize{10};
+  UPROPERTY(EditAnywhere, Category = "Mechanics", meta = (ClampMin = "1", ClampMax = "40"))
+  int32 RoomsCacheSize{5};
 
   /** Amount of empty rooms to warm up */
-  UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mechanics", meta = (ClampMin = "2", ClampMax = "40"))
-  int32 EntryRoomsCacheSize{3};
+  UPROPERTY(EditAnywhere, Category = "Mechanics", meta = (ClampMin = "1", ClampMax = "40"))
+  int32 EntryRoomsCacheSize{5};
+
+  UPROPERTY(BlueprintReadOnly, Category = "Mechanics")
+  int32 Level{0};
 
   /** Mesh for all inner objects */
   UPROPERTY()
@@ -129,10 +116,6 @@ class AObstracles : public AActor {
 
  private:
   bool bIsRunning_{false};
-  float NextHoleHeight_{0.f};
-  bool bPieceTypeSemaphore{false};
-  int32 RoomsCacheSize_{10};
-  int32 EntryRoomsCacheSize_{3};
   float DifficultyMultiplier_{1.f};
   bool bIsInHole{false};
 };
