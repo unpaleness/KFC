@@ -79,7 +79,7 @@ void URoomComponent::RenewWallWithHole() {
 
   if (IsValid(Hole)) {
     Hole->SetRelativeLocation({0.f, 0.f, HoleHeight});
-    Hole->SetBoxExtent({LastVolume_.X, LastSideWidth_, LastHoleSize_});
+    Hole->SetBoxExtent(FVector(LastVolume_.X, LastSideWidth_, LastHoleSize_) / 2.f);
   } else {
     UE_LOG(LogRoomComponent, Warning, TEXT("Hole is invalid!"));
   }

@@ -2,8 +2,6 @@
 
 #include "ChickenCharacter.h"
 #include "ChickenPlayerController.h"
-#include "Components/BoxComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "EmptyRoomComponent.h"
 #include "RoomComponent.h"
 
@@ -20,21 +18,13 @@ const auto CollisionProfileName = TEXT("OverlapAllDynamic");
 AObstracles::AObstracles() {
   PrimaryActorTick.bCanEverTick = true;
 
-  Root = CreateDefaultSubobject<USceneComponent>("Root");
-  SetRootComponent(Root);
-
-  static const auto MeshCube =
-      ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
-  MeshPtr = MeshCube.Object;
+  RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
-
-void AObstracles::PostActorCreated() {}
 
 void AObstracles::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
 
   if (bIsRunning_) {
-    TickEntryRooms(DeltaTime);
     TickRooms(DeltaTime);
   }
 }
@@ -82,8 +72,9 @@ void AObstracles::ProcessHoleEndOverlap_Implementation(UPrimitiveComponent* Over
 
   UE_LOG(LogObstracles, Log, TEXT("Hole ended overlap with %s"), *OtherActor->GetClass()->GetName());
 
-  if (!bIsInHole)
+  if (!bIsInHole) {
     return;
+  }
 
   bIsInHole = false;
 
@@ -105,19 +96,23 @@ void AObstracles::ProcessSolidBeginOverlap_Implementation(UPrimitiveComponent* O
 
   auto ChickenCharacter = Cast<AChickenCharacter>(OtherActor);
 
-  if (!IsValid(ChickenCharacter))
+  if (!IsValid(ChickenCharacter)) {
     return;
+  }
 
   auto ChickenController = Cast<AChickenPlayerController>(ChickenCharacter->GetController());
 
-  if (!IsValid(ChickenController))
+  if (!IsValid(ChickenController)) {
     return;
+  }
 
   ChickenController->ProcessChickenHit();
 }
 
 void AObstracles::BeginPlay() {
   Super::BeginPlay();
+
+  SpawnPoint_ = GetActorLocation();
 
   auto GameMode = Cast<AKFCGameMode>(GetWorld()->GetAuthGameMode());
   if (IsValid(GameMode)) {
@@ -132,6 +127,8 @@ void AObstracles::Reset() {
 
   Level = 0;
   DifficultyMultiplier_ = 1.f;
+
+  SetActorLocation(SpawnPoint_);
 }
 
 void AObstracles::RecreateEntryRooms() {
@@ -145,7 +142,7 @@ void AObstracles::RecreateEntryRooms() {
   for (int32 i = 0; i < EntryRoomsCacheSize; ++i) {
     auto EntryRoom =
         NewObject<UEmptyRoomComponent>(this, MakeUniqueObjectName(GetWorld(), UEmptyRoomComponent::StaticClass()));
-    EntryRoom->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+    EntryRoom->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
     EntryRoom->RegisterComponent();
     EntryRoom->RecreateSubComponents();
     EntryRoom->SetRelativeLocation({0.f, -DistanceToFirstRoom + StepWidth * (i + 0.5f), 0.f});
@@ -166,7 +163,7 @@ void AObstracles::RecreateRooms() {
   Rooms.Reserve(RoomsCacheSize);
   for (int32 i = 0; i < RoomsCacheSize; ++i) {
     auto Room = NewObject<URoomComponent>(this, MakeUniqueObjectName(GetWorld(), URoomComponent::StaticClass()));
-    Room->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+    Room->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
     Room->RegisterComponent();
     Room->RecreateSubComponents();
     Room->SetRelativeLocation({0.f, -DistanceToFirstRoom - StepWidth * (i + 0.5f), 0.f});
@@ -178,18 +175,10 @@ void AObstracles::RecreateRooms() {
   }
 }
 
-void AObstracles::TickEntryRooms(const float DeltaTime) {
-  for (auto EntryRoom : EntryRooms) {
-    if (EntryRoom->GetRelativeLocation().Y <= MaxLeftDistanceToReplaceRoom + StepWidth / 2.f) {
-      EntryRoom->AddRelativeLocation({0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f});
-    }
-  }
-}
-
 void AObstracles::TickRooms(const float DeltaTime) {
   for (auto Room : Rooms) {
-    Room->AddRelativeLocation({0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f});
-    if (Room->GetRelativeLocation().Y > MaxLeftDistanceToReplaceRoom - StepWidth / 2.f) {
+    if (FVector(GetActorLocation() + Room->GetRelativeLocation() - SpawnPoint_).Y >
+        MaxLeftDistanceToReplaceRoom - StepWidth / 2.f) {
       Room->AddRelativeLocation({0.f, -StepWidth * RoomsCacheSize, 0.f});
       Room->RenewWallWithHole();
     }

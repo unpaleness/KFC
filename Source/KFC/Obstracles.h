@@ -7,9 +7,7 @@
 #include "Obstracles.generated.h"
 
 class UEmptyRoomComponent;
-class UBoxComponent;
 class URoomComponent;
-class UStaticMeshComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogObstracles, Log, All)
 
@@ -19,7 +17,6 @@ class AObstracles : public AActor {
 
  public:
   AObstracles();
-  virtual void PostActorCreated() override;
   virtual void Tick(float DeltaTime) override;
   virtual void OnConstruction(const FTransform& Transform) override;
 
@@ -59,13 +56,9 @@ class AObstracles : public AActor {
   void RecreateEntryRooms();
   void RecreateRooms();
 
-  void TickEntryRooms(const float DeltaTime);
   void TickRooms(const float DeltaTime);
 
  protected:
-  UPROPERTY()
-  USceneComponent* Root;
-
   UPROPERTY()
   TArray<UEmptyRoomComponent*> EntryRooms;
 
@@ -118,4 +111,5 @@ class AObstracles : public AActor {
   bool bIsRunning_{false};
   float DifficultyMultiplier_{1.f};
   bool bIsInHole{false};
+  FVector SpawnPoint_{0.f, 0.f, 0.f};
 };
