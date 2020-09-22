@@ -25,6 +25,7 @@ void AObstracles::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
 
   if (bIsRunning_) {
+    AddActorLocalOffset({0.f, DeltaTime * Speed * DifficultyMultiplier_, 0.f});
     TickRooms(DeltaTime);
   }
 }
